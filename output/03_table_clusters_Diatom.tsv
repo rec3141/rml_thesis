@@ -1,0 +1,10 @@
+Project	Depth Bin	D1	D2	D3	D4	D5	D6	D7
+ASGARD	surface	4	17	8	24	4	0	0
+ASGARD	midwater	3	21	7	26	6	0	1
+ASGARD	bottom	1	18	6	30	4	0	0
+AMBON	surface	3	12	6	4	16	7	2
+AMBON	midwater	3	21	12	15	37	27	9
+AMBON	bottom	3	15	2	3	12	7	1
+DBO-NCIS	surface	2	3	4	1	9	0	7
+DBO-NCIS	midwater	2	20	7	10	30	8	31
+DBO-NCIS	bottom	0	4	1	2	14	0	8
