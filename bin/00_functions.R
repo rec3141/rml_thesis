@@ -1,3 +1,6 @@
+#install required packages and dependencies
+#install.packages(c("gplots","vegan","dendextend","phytools","heatmap.plus","ggtree","ggstance","colorspace","ggpubr","compositions","grid","egg","ggplot2","oce","viridis","PBSmapping","marmap","scales"),dependencies=TRUE)
+
 # function to calculate stratification
 # requires data frame with rho, z, bottom
 stratify <- function(y) {

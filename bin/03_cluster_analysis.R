@@ -29,7 +29,7 @@ for(txn in c("d","p")) {
 #heatmap and clustering
 
 ## Using Manhattan transform and Bray distance
-pdf(file=paste0('output/figure_heatmap_',tx,'_manbray.pdf'), width=24, height=24)
+pdf(file=paste0('output/03_figure_heatmap_',tx,'_manbray.pdf'), width=24, height=24)
 hmman <- heatmap.2(as.matrix(x.taxa)^.25, trace='none', margins=c(5,5),
                 labRow = x.meta$project,
                 distfun=function(x) vegdist(x, method="bray", na.rm=TRUE),
@@ -37,7 +37,7 @@ hmman <- heatmap.2(as.matrix(x.taxa)^.25, trace='none', margins=c(5,5),
 dev.off()
 
 ## Using CLR transform and Euclidean distance
-pdf(file=paste0('output/figure_heatmap_',tx,'_clreuc.pdf'), width=24, height=24)
+pdf(file=paste0('output/03_figure_heatmap_',tx,'_clreuc.pdf'), width=24, height=24)
 hmclr <- heatmap.2(as.matrix(clr(x.taxa)), trace='none', margins=c(5,5),
                 labRow = x.meta$project,
                 distfun=function(x) vegdist(x, method="euc", na.rm=TRUE), 
@@ -45,7 +45,7 @@ hmclr <- heatmap.2(as.matrix(clr(x.taxa)), trace='none', margins=c(5,5),
 dev.off()
 
 ## Using CLR transformed dendrograms with Manhattan transformed values
-pdf(file=paste0('output/figure_heatmap_',tx,'_manbray_with_clr.pdf'), width=24, height=24)
+pdf(file=paste0('output/03_figure_heatmap_',tx,'_manbray_with_clr.pdf'), width=24, height=24)
 hmmanclr <- heatmap.2(as.matrix(x.taxa)^.25, trace='none', margins=c(5,5),
                    labRow = x.meta$project,
                    distfun=function(x) vegdist(x, method="bray", na.rm=TRUE),
@@ -90,7 +90,7 @@ rowcols <- cbind(
 )
 
 #plot heatmap with bars
-pdf(file=paste0('output/figure_heatmap_',tx,'_bars.pdf'), width=48, height=48)
+pdf(file=paste0('output/03_figure_heatmap_',tx,'_bars.pdf'), width=48, height=48)
 hm_cuts2 <- heatmap.plus(as.matrix(x.taxa)^.25, margins=c(12,12),
                          RowSideColors = rowcols,
                          labRow = x.meta$project,  
@@ -120,10 +120,10 @@ treebarplot <- facet_plot(data=tredat, treeplot, panel="barplot", geom=geom_barh
         strip.text.x = element_blank())
 
 #plot rotated tree
-png(file=paste0("output/figure_tree_",tx,".png"),width=6,height=6,units = "in", res=300)
+png(file=paste0("output/03_figure_tree_",tx,".png"),width=6,height=6,units = "in", res=300)
 print(treebarplot, vp=viewport(angle=-90, width = unit(.5, "npc"), height = unit(1, "npc")))
 dev.off()
-# ggsave(treebarplot, filename=paste0("output/figure_tree_",tx,".png"),width=6,height=6)
+# ggsave(treebarplot, filename=paste0("output/03_figure_tree_",tx,".png"),width=6,height=6)
 
 
 
@@ -221,13 +221,13 @@ p <- ggplot(newdat, aes(fill = variable, y = value, x = facet1, label=variable))
 # this colors the bars and legend by taxonomic level (e.g. 'gen', 'fam')
 pp = p + scale_fill_manual("legend",values = getcolors(tmptax,"gen"))
 pp
-ggsave(filename = paste0('output/figure_barplot_',tx,'.png'),device = png(),width = 12, height=4)
+ggsave(filename = paste0('output/03_figure_barplot_',tx,'.png'),device = png(),width = 12, height=4)
 
 ppl = pp + theme(legend.position="bottom") 
 ppl_legend <- ggpubr::get_legend(ppl)
 ppleg = ggpubr::as_ggplot(ppl_legend)
 ppleg
-ggsave(filename = paste0('output/figure_barplot_leg_',tx,'.png'),device = png(),width = 12, height=4)
+ggsave(filename = paste0('output/03_figure_barplot_leg_',tx,'.png'),device = png(),width = 12, height=4)
 
 
 #### Generate Table 4
@@ -236,7 +236,7 @@ table4 = reshape2::dcast(table4,project + depth_type ~ cluster)
 table4 = table4[order(table4$depth_type, decreasing=T),]
 table4 = table4[order(table4$project),]
 colnames(table4)[1:2] = c("Project", "Depth Bin")
-write.table(table4,file=paste0("output/table_clusters_",tx,".tsv"),sep="\t",quote=F,row.names=F)
+write.table(table4,file=paste0("output/03_table_clusters_",tx,".tsv"),sep="\t",quote=F,row.names=F)
 
 if(tx=="Diatom") { d.meta = x.meta; d.top.names = x.pick.names; d.top.newnames = new_name }
 if(tx=="Picoeukaryote") { p.meta = x.meta; p.top.names = x.pick.names; p.top.newnames = new_name }
@@ -287,12 +287,17 @@ for(i in 1:ncol(z.meta)) {
 
   }
 
-pdf(file=paste0("output/figure_cluster_boxplots_",tx,".pdf"),width=8,height=3)
+pdf(file=paste0("output/03_figure_cluster_boxplots_",tx,".pdf"),width=8,height=3)
 invisible(lapply(bptmp, print))
 dev.off()
 
-bpar = ggarrange(plotlist=bptmp,ncol=1)
-ggsave(plot=bpar, file=paste0("output/figure_cluster_boxplots_combined_",tx,".png"),
+bpar = ggarrange(plots=bptmp,ncol=1)
+ggsave(plot=bpar, file=paste0("output/03_figure_cluster_boxplots_combined_",tx,".png"),
        device=png(),width=6,height=30)
 
 } #end diatoms/picos
+
+
+#####
+
+source("bin/04_ts_plots.R")

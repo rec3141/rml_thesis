@@ -15,8 +15,9 @@
 # require(SDMTools)
 # require(e1071)
 # require(locClass)
+require(oce)
 
-setwd("~/Downloads/thesis-master/201912")
+#setwd("~/Downloads/thesis-master/201912")
 #graphics.off()
 #options(device="quartz")
 
@@ -65,6 +66,7 @@ if(tdb=="SILVA") taxadb = "ref_dada2_silva_v132.fasta"
 namedlist = nameslist[[taxadb]]
 names(namedlist) = colnames(seqtab)
 
+# limit to taxonomic subset
 #taxa = seqtab[,tablelist=="16S_prokaryote"]
 taxa = seqtab[,tablelist=="18S_protist"]
 
@@ -72,7 +74,7 @@ taxa = seqtab[,tablelist=="18S_protist"]
 taxa <- taxa[which(rowSums(taxa>0)>0),which(colSums(taxa>0)>0)] # omits columns/rows with 0
 taxa <- taxa[which(rowSums(taxa>0)>0),which(colSums(taxa>0)>0)] # omits columns/rows with 0
 
-#get proportional table
+#get proportional table (counts per million)
 taxa = 1e6*as.data.frame(prop.table(taxa,margin=1))
 
 #remove data for which there is missing metadata or taxonomic info
@@ -80,16 +82,19 @@ common_samples <- intersect(rownames(meta),rownames(taxa))
 meta <- meta[common_samples, ] #916 -> 639
 taxa <- taxa[common_samples, ] #734 -> 639
 
+# save sequences before renaming taxa
 taxa_seqs = colnames(taxa)
 
+# open taxonomic bootstraps
 bootout = readRDS("data/bootout_edit.rds")
 boot = bootout[[taxadb]]
 boot = data.frame(boot[taxa_seqs,])
 
 original_names <- unname(namedlist[taxa_seqs])
 taxa_split = split_by_character(original_names,";")
-#PR2
+#PR2 taxonomic levels
 if(tdb=="PR2") colnames(taxa_split) = c("Domain","Superphylum","Phylum","Class","Order","Family","Genus","Species","ESV")
+#SILVA taxonomic levels
 if(tdb=="SILVA") colnames(taxa_split) = c("root","Domain","Major Clade","Superkingdom","Kingdom","Subkingdom","Infrakingdom","Superphylum","Phylum","Subphylum","Infraphylum","Superclass","Class","Subclass","Infraclass","Superorder","Order","Suborder","Superfamily","Family","Subfamily","Genus","Accession","ESV")
 
 short_names <- paste(taxa_split$Family, taxa_split$Genus, taxa_split$ESV, boot$Genus, sep=' ')
@@ -103,7 +108,7 @@ rownames(boot) = short_names
 tcutoff = 60 #cutoff for taxonomic id
 taxa_good = taxa_split
 
-# remove taxa lacking bootstrap support
+# replace taxa lacking bootstrap support with higher taxonomic level
 for(i in 1:nrow(taxa_good)) {
   curtax=taxa_good[i,1]
   for(j in 1:ncol(boot)) {
@@ -171,5 +176,5 @@ p.prop = as.data.frame(prop.table(as.matrix(p.taxa),margin=1))
 
 ######################
 
-
+source("bin/02_taxa_prop_tables.R")
 

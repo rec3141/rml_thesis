@@ -111,7 +111,7 @@ stnmap = batmap +
 
 #stnmap
 
-ggsave(plot=stnmap, filename="output/figure_map_bathy_station.png", device=png(), width=6, height=8)
+ggsave(plot=stnmap, filename="output/05_figure_map_bathy_station.png", device=png(), width=6, height=8)
 
 
 #add station points to filled bathy map
@@ -125,7 +125,7 @@ stnmap2 = bbmap +
 
 stnmap2
 
-ggsave(plot=stnmap2, filename="output/figure_map_bathy_stations2.png", device=png(), width=6, height=8)
+ggsave(plot=stnmap2, filename="output/05_figure_map_bathy_stations2.png", device=png(), width=6, height=8)
 
 
 
@@ -158,7 +158,7 @@ znames = c("Latitude\n(°N)","Longitude\n(°E)","Temperature\n(°C)","Salinity\n
 
 ### plot metadata maps
 metamp = list()
-for(i in 1:ncol(z.meta)) {
+for(i in 1:(ncol(z.meta)-3)) {
   coltax = colnames(z.meta)[i]
   ttax = znames[i]
   
@@ -173,9 +173,10 @@ for(i in 1:ncol(z.meta)) {
            shape = guide_legend(order = 1),
            size = guide_legend(order=3)) +
     facet_wrap(vars(depth_type), labeller = as_labeller(depthnames))
+
 }
 
-pdf(file="output/figure_map_metadata.pdf",width=12,height=6)
+pdf(file="output/05_figure_map_metadata.pdf",width=12,height=6)
 invisible(lapply(metamp, print))
 dev.off()
 
@@ -194,7 +195,7 @@ dmp <- basemap +
     guides(col=guide_legend(ncol=1,byrow=TRUE)) +
     facet_wrap(vars(depth_type), labeller = as_labeller(depthnames))
   
-ggsave(plot=dmp, filename="output/figure_map_diatom_clusters.png",width=14,height=8,device=png())
+ggsave(plot=dmp, filename="output/05_figure_map_diatom_clusters.png",width=14,height=8,device=png())
 
 
 # diatom cluster map with bathy
@@ -209,7 +210,7 @@ dmpb <- batmap +
   guides(col=guide_legend(ncol=1,byrow=TRUE)) +
   facet_wrap(vars(depth_type), labeller = as_labeller(depthnames))
 
-ggsave(plot=dmpb, filename="output/figure_map_bathy_diatom_clusters.png",width=14,height=8,device=png())
+ggsave(plot=dmpb, filename="output/05_figure_map_bathy_diatom_clusters.png",width=14,height=8,device=png())
 
 
 # picos cluster map
@@ -221,7 +222,7 @@ pmp <- basemap +
   guides(col=guide_legend(ncol=1,byrow=TRUE)) +
   facet_wrap(vars(depth_type), labeller = as_labeller(depthnames))
 
-ggsave(plot=pmp, filename="output/figure_map_picos_clusters.png",width=14,height=8,device=png())
+ggsave(plot=pmp, filename="output/05_figure_map_picos_clusters.png",width=14,height=8,device=png())
 
 
 
@@ -237,7 +238,7 @@ pmpb <- batmap +
   guides(col=guide_legend(ncol=1,byrow=TRUE)) +
   facet_wrap(vars(depth_type), labeller = as_labeller(depthnames))
 
-ggsave(plot=pmpb, filename="output/figure_map_bathy_picos_clusters.png",width=14,height=8,device=png())
+ggsave(plot=pmpb, filename="output/05_figure_map_bathy_picos_clusters.png",width=14,height=8,device=png())
 
 #####
 
@@ -263,8 +264,8 @@ for(i in 1:length(d.top.names)) {
       facet_wrap(vars(depth_type), labeller = as_labeller(depthnames))
 }
 
-pdf(file="output/figure_map_diatom_tops.pdf",width=12,height=6)
-invisible(lapply((dtopmp), print))
+pdf(file="output/05_figure_map_diatom_tops.pdf",width=12,height=6)
+invisible(lapply(dtopmp, print))
 dev.off()
 
 
@@ -292,7 +293,7 @@ for(i in 1:length(p.top.names)) {
     facet_wrap(vars(depth_type), labeller = as_labeller(depthnames))
 }
 
-pdf(file="output/figure_map_picos_tops.pdf",width=12,height=6)
-invisible(lapply((ptopmp), print))
+pdf(file="output/05_figure_map_picos_tops.pdf",width=12,height=6)
+invisible(lapply(ptopmp, print))
 dev.off()
 

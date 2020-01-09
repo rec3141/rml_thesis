@@ -2,9 +2,9 @@
 
 ######## Results: Overall Structure (SILVA)
 
-library(ggplot2)
+require(ggplot2)
 
-#diatoms = Diatometa
+#diatoms = Diatomea
 #picos = Chlorophyta, Haptophyta, or Chrysophyceae
 sub.lab = rep("Other",ncol(sub.taxa))
 sub.lab[grepl("Haptophyta",taxa_split$Kingdom) | grepl("Chlorophyta",taxa_split$Subkingdom) | grepl("Chrysophyceae",taxa_split$Class)] = "Pico"
@@ -32,7 +32,7 @@ phy.agg$Phylum = taxa_split$Phylum[match(rownames(phy.agg),taxa_split$Genus)]
 phy.agg = phy.agg[order(phy.agg$Phylum, phy.agg$phy.agg.mean,decreasing = T),]
 phy.agg = phy.agg[phy.agg$phy.agg.mean>0,]
 
-write.table(phy.agg,file="output/table_taxa_summary.tsv")
+write.table(phy.agg,file="output/02_table_taxa_summary.tsv")
 
 
 ######## Results: Diatoms -- Table & Figure - diatom relative abundance (SILVA)
@@ -65,8 +65,10 @@ for(i in 1:length(class.agg)) {
 t.cast = t.cast[order(t.cast$order,t.cast$Family,t.cast$vals,t.cast$esvs,decreasing=TRUE),]
 t.cast$vals[t.cast$vals==0] = "<0.1"
 
-write.table(t.cast,file="output/table_diatoms_relabund.tsv",sep="\t",quote=F,row.names=F)
+write.table(t.cast,file="output/02_table_diatoms_relabund.tsv",sep="\t",quote=F,row.names=F)
 
+
+## diatom cumulative relative abundance plot
 t.plot = data.frame("ESVs"=1:nrow(t.agg),"vals"=t.agg$vals)
 t.plot = t.plot[order(t.plot$vals,decreasing=TRUE),]
 t.plot$Cumulative = cumsum(t.plot$vals)/sum(t.plot$vals)*100
@@ -75,7 +77,7 @@ t.plot$breakpoint = t.plot$Cumulative-1:nrow(t.plot)
 t.plot = t.plot[t.plot$vals>0,]
 gd = ggplot(t.plot) + geom_line(aes(x=ESVs,y=Cumulative)) + xlab("Number of Diatom ESVs") + ylab("Cumulative Percentile")
 gd
-ggsave(file="output/figure_diatom_cumulative.png",device=png(),width=4,height=4)
+ggsave(file="output/02_figure_diatom_cumulative.png",device=png(),width=4,height=4)
 
 
 
@@ -109,8 +111,9 @@ for(i in 1:length(class.agg)) {
 t.cast = t.cast[order(t.cast$order,t.cast$Kingdom,t.cast$vals,t.cast$esvs,decreasing=TRUE),]
 t.cast$vals[t.cast$vals==0] = "<0.1"
 
-write.table(t.cast,file="output/table_picos_relabund.tsv",sep="\t",quote=F,row.names=F)
+write.table(t.cast,file="output/02_table_picos_relabund.tsv",sep="\t",quote=F,row.names=F)
 
+## picos cumulative relative abundance plot
 t.plot = data.frame("ESVs"=1:nrow(t.agg),"vals"=t.agg$vals)
 t.plot = t.plot[order(t.plot$vals,decreasing=TRUE),]
 t.plot = t.plot[t.plot$vals>0,]
@@ -119,8 +122,10 @@ t.plot$ESVs = 1:nrow(t.plot)
 t.plot$breakpoint = t.plot$Cumulative-1:nrow(t.plot)
 gp = ggplot(t.plot) + geom_line(aes(x=ESVs,y=Cumulative)) + xlab("Number of Picoeukaryotic ESVs") + ylab("Cumulative Percentile")
 gp
-ggsave(file="output/figure_picos_cumulative.png",device=png(),width=4,height=4)
+ggsave(file="output/02_figure_picos_cumulative.png",device=png(),width=4,height=4)
 
+#####
 
+source("bin/03_cluster_analysis.R")
 
 

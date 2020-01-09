@@ -52,13 +52,13 @@ mts = baseplot +
                        breaks=c('FACW','ACW','AW','BSW','MWR','RWW','WW'),
                        labels=c('FACW','ACW','AW','BSW','MWR','RWW','WW'))
 
-ggsave(plot = mts, filename = "output/figure_ts_watermass.png",device = png(),width = 6, height=6)
+ggsave(plot = mts, filename = "output/04_figure_ts_watermass.png",device = png(),width = 6, height=6)
 
 mtsl = mts + theme(legend.position="bottom", legend.direction="vertical") + 
   guides(col=guide_legend(nrow=3,byrow=TRUE))
 mts_legend <- get_legend(mtsl)
 mtsleg = as_ggplot(mts_legend)
-ggsave(plot=mtsleg, filename = "output/figure_ts_watermass_leg.png",device = png(),width = 8, height=2)
+ggsave(plot=mtsleg, filename = "output/04_figure_ts_watermass_leg.png",device = png(),width = 8, height=2)
 
 
 # nutrients plot
@@ -81,12 +81,12 @@ nts = baseplot +
              labels=c('0','5','10','15'),
              range=c(1,5))
   
-ggsave(plot=nts, filename = "output/figure_ts_nutrients.png",device = png(),width = 6, height=6)
+ggsave(plot=nts, filename = "output/04_figure_ts_nutrients.png",device = png(),width = 6, height=6)
 
 ntsl = nts + theme(legend.position="bottom", legend.direction="vertical") + guides(size = guide_legend(reverse = TRUE))
 nts_legend <- get_legend(ntsl)
 ntsleg = as_ggplot(nts_legend)
-ggsave(plot=ntsleg, filename = "output/figure_ts_nutrients_leg.png",device = png(),width = 8, height=2)
+ggsave(plot=ntsleg, filename = "output/04_figure_ts_nutrients_leg.png",device = png(),width = 8, height=2)
 
 
 
@@ -106,12 +106,12 @@ dots = baseplot +
               labels=c('200','250', '300','350','400'))
 
 
-ggsave(plot=dots, filename = "output/figure_ts_oxygen.png",device = png(),width = 6, height=6)
+ggsave(plot=dots, filename = "output/04_figure_ts_oxygen.png",device = png(),width = 6, height=6)
 
 dotsl = dots + theme(legend.position="bottom", legend.direction="vertical") + guides(size = guide_legend(reverse = TRUE))
 dots_legend <- get_legend(dotsl)
 dotsleg = as_ggplot(dots_legend)
-ggsave(plot=dotsleg, filename = "output/figure_ts_oxygen_leg.png",device = png(),width = 8, height=2)
+ggsave(plot=dotsleg, filename = "output/04_figure_ts_oxygen_leg.png",device = png(),width = 8, height=2)
 
 
 # chla plot
@@ -132,12 +132,12 @@ cts = baseplot +
               range = c(1,5), limits = c(0,10))
 
 
-ggsave(plot=cts, filename = "output/figure_ts_chla.png",device = png(),width = 6, height=6)
+ggsave(plot=cts, filename = "output/04_figure_ts_chla.png",device = png(),width = 6, height=6)
 
 ctsl = cts + theme(legend.position="bottom", legend.direction="vertical") + guides(size = guide_legend(reverse = TRUE))
 cts_legend <- get_legend(ctsl)
 ctsleg = as_ggplot(cts_legend)
-ggsave(plot=ctsleg, filename = "output/figure_ts_chla_leg.png",device = png(),width = 8, height=2)
+ggsave(plot=ctsleg, filename = "output/04_figure_ts_chla_leg.png",device = png(),width = 8, height=2)
 
 
 
@@ -146,7 +146,7 @@ ggsave(plot=ctsleg, filename = "output/figure_ts_chla_leg.png",device = png(),wi
 dts = baseplot + 
   geom_point(data=d.meta, aes(x=salinity, y=temp, color=cluster, shape=project))
 
-ggsave(plot=dts, filename = "output/figure_ts_diatom.png",device = png(),width = 6, height=6)
+ggsave(plot=dts, filename = "output/04_figure_ts_diatom.png",device = png(),width = 6, height=6)
 
 dtsl = dts + theme(legend.position="bottom") + 
   scale_color_manual(name="Cluster", values=gg_color_hue(length(unique(d.meta$cluster))),
@@ -156,7 +156,7 @@ dtsl = dts + theme(legend.position="bottom") +
 
 dts_legend <- get_legend(dtsl)
 dtsleg = as_ggplot(dts_legend)
-ggsave(plot=dtsleg, filename = "output/figure_ts_diatom_leg.png",device = png(),width = 8, height=1)
+ggsave(plot=dtsleg, filename = "output/04_figure_ts_diatom_leg.png",device = png(),width = 8, height=1)
 
 
 # picos clusters ts plot
@@ -167,12 +167,12 @@ pts = baseplot +
                      labels=sort(unique(p.meta$cluster))) +
   scale_shape_discrete(guide=FALSE)
 
-ggsave(plot=pts, filename = "output/figure_ts_picos.png",device = png(),width = 6, height=6)
+ggsave(plot=pts, filename = "output/04_figure_ts_picos.png",device = png(),width = 6, height=6)
 
 ptsl = pts + theme(legend.position="bottom") 
 pts_legend <- get_legend(ptsl)
 ptsleg = as_ggplot(pts_legend)
-ggsave(plot=ptsleg, filename = "output/figure_ts_picos_leg.png",device = png(), width = 8, height=1)
+ggsave(plot=ptsleg, filename = "output/04_figure_ts_picos_leg.png",device = png(), width = 8, height=1)
 
 
 
@@ -180,11 +180,15 @@ ggsave(plot=ptsleg, filename = "output/figure_ts_picos_leg.png",device = png(), 
 ggar = ggarrange(mts, nts, mtsleg, ntsleg, dots, cts, dotsleg, ctsleg,
    nrow=4,heights=c(4,2.5,4,2.5))
 ggar
-ggsave(plot=ggar, file="output/figure_ts_combined_meta.png",device=png(),width=10,height=8*1.615)
+ggsave(plot=ggar, file="output/04_figure_ts_combined_meta.png",device=png(),width=10,height=8*1.615)
 
 
 ggar2 = ggarrange(dts, pts, dtsleg, ptsleg,
   nrow=2, heights=c(4,1))
 ggar2
-ggsave(plot=ggar2, file="output/figure_ts_combined_clusters.png",device=png(),width=10,height=5*1.25)
+ggsave(plot=ggar2, file="output/04_figure_ts_combined_clusters.png",device=png(),width=10,height=5*1.25)
 
+
+#######
+
+source("bin/05_maps.R")
