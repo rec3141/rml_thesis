@@ -15,38 +15,58 @@ require(ggpubr)
 require(compositions)
 require(grid)
 require(egg) # for ggarrange(), overwrites ggpubr::ggarrange
+require(ggbeeswarm)
+require(clustsig)
 
-#number of pico clusters
-npclus = 7
-#number of diatom clusters
-ndclus = 7
+clus.list = list("diatoms" = 7,
+                 "picos" = 11,
+                 "ciliates" = 13,
+                 "fungi" = 21,
+                 "dinos" = 15,
+                 "other" = 7,
+                 "bacteria" = 13,
+                 "metazoa" = 7)
 
-for(txn in c("d","p")) {
+cutoff = 0.85
 
-  if(txn=="d") { tx="Diatom"; x.meta = d.meta; x.taxa = d.prop; nclus=ndclus; clusnames = paste0("D",1:nclus)}
-  if(txn=="p") { tx="Picoeukaryote"; x.meta = p.meta; x.taxa = p.prop; nclus=npclus; clusnames = paste0("P",1:nclus) }
+for(tax in names(mat.list)) {
+
+  tx = mat.list[[tax]][["title"]]
+  abb = mat.list[[tax]][["short"]]
+  x.meta = mat.list[[tax]][["meta"]]
+  x.prop = mat.list[[tax]][["prop"]]
+  nclus = clus.list[[tax]]
+  clusnames = paste0(abb,1:nclus)
+
 
 #heatmap and clustering
 
-## Using Manhattan transform and Bray distance
-pdf(file=paste0('output/03_figure_heatmap_',tx,'_manbray.pdf'), width=24, height=24)
-hmman <- heatmap.2(as.matrix(x.taxa)^.25, trace='none', margins=c(5,5),
+## Using fourth root transform and Bray distance
+par(mfrow=c(2,2))
+hist(as.matrix(x.taxa[x.taxa>0])^1,breaks=100, main="^1")
+hist(as.matrix(x.taxa[x.taxa>0])^.5,breaks=100, main="^1/2")
+hist(as.matrix(x.taxa[x.taxa>0])^.25,breaks=100, main="^1/4")
+hist(log(as.matrix(x.taxa[x.taxa>0])),breaks=100, main="log")
+
+pdf(file=paste0('output/03_figure_heatmap_',tax,'_manbray.pdf'), width=24, height=24)
+hmman <- heatmap.2(as.matrix(x.prop)^.25, trace='none', margins=c(5,5),
                 labRow = x.meta$project,
                 distfun=function(x) vegdist(x, method="bray", na.rm=TRUE),
                 hclustfun=function(x) hclust(x, method="ward.D2"))
 dev.off()
 
 ## Using CLR transform and Euclidean distance
-pdf(file=paste0('output/03_figure_heatmap_',tx,'_clreuc.pdf'), width=24, height=24)
-hmclr <- heatmap.2(as.matrix(clr(x.taxa)), trace='none', margins=c(5,5),
+pdf(file=paste0('output/03_figure_heatmap_',tax,'_clreuc.pdf'), width=24, height=24)
+hmclr <- heatmap.2(as.matrix(clr(x.prop)), trace='none', margins=c(5,5),
                 labRow = x.meta$project,
                 distfun=function(x) vegdist(x, method="euc", na.rm=TRUE), 
                 hclustfun=function(x) hclust(x, method="ward.D2"))
 dev.off()
 
+
 ## Using CLR transformed dendrograms with Manhattan transformed values
-pdf(file=paste0('output/03_figure_heatmap_',tx,'_manbray_with_clr.pdf'), width=24, height=24)
-hmmanclr <- heatmap.2(as.matrix(x.taxa)^.25, trace='none', margins=c(5,5),
+pdf(file=paste0('output/03_figure_heatmap_',tax,'_manbray_with_clr.pdf'), width=24, height=24)
+hmmanclr <- heatmap.2(as.matrix(x.prop)^.25, trace='none', margins=c(5,5),
                    labRow = x.meta$project,
                    distfun=function(x) vegdist(x, method="bray", na.rm=TRUE),
                    Rowv = hmclr$rowDendrogram, 
@@ -77,6 +97,7 @@ tre.rle = rle(sort(as.character(x.meta$cluster)))
 tre.rle = data.frame(tre.rle$values,"N"=tre.rle$lengths)
 rownames(tre.rle) = tre.rle[,1]
 tre.rle = tre.rle[,-1,drop=F]
+tre.rle = tre.rle[order(as.numeric(gsub(abb,"", rownames(tre.rle)))),,drop=F]
 
 # heatmap with rowside color bars
 rowcols <- cbind(
@@ -90,8 +111,8 @@ rowcols <- cbind(
 )
 
 #plot heatmap with bars
-pdf(file=paste0('output/03_figure_heatmap_',tx,'_bars.pdf'), width=48, height=48)
-hm_cuts2 <- heatmap.plus(as.matrix(x.taxa)^.25, margins=c(12,12),
+pdf(file=paste0('output/03_figure_heatmap_',tax,'_bars.pdf'), width=48, height=48)
+hm_cuts2 <- heatmap.plus(as.matrix(x.prop)^.25, margins=c(12,12),
                          RowSideColors = rowcols,
                          labRow = x.meta$project,  
                          distfun=function(x) vegdist(x, method="bray", na.rm=TRUE),
@@ -104,26 +125,31 @@ tiplabels()
 
 # construct ggtree plot with upper tree and barplots
 
-treeplot <- ggtree(tre.upper) + geom_tiplab(aes(angle=90,size=24),offset=.5,hjust=0.5) + xlim_tree(3.7)
+#rotate to keep tree order
+tre.upper = rotateConstr(tre.upper, clusnames)
+
+treeplot <- ggtree(tre.upper, ladderize=F) + geom_tiplab(aes(angle=90,size=24),offset=.5,hjust=0.5) + xlim_tree(3.7)
 
 #have to flip nodes on picos tree to get them in order
-if(tx=="Picoeukaryote") { treeplot = ggtree::flip(treeplot, 11,12) }
+#if(tax=="picos") { treeplot = ggtree::flip(treeplot, 11,12) }
 
-tredat <- data.frame(id=tre.upper$tip.label, tre.rle, col=as.character(1:7) )
+tredat <- data.frame(id=tre.upper$tip.label, tre.rle, col=factor(as.character(1:nclus),levels=1:nclus), stringsAsFactors = F)
 
 treebarplot <- facet_plot(data=tredat, treeplot, panel="barplot", geom=geom_barh, mapping = aes(x = N, fill=col), stat='identity') + 
   theme_tree2() + theme(panel.spacing = unit(0.5, "lines")) + theme(legend.position = "none") +
-  geom_text(data=tredat,aes(x=c(rep(NA,nclus),rep(25,nclus)),y=c(rep(NA,nclus),1:nclus),label=N,angle=90),vjust=0.3,na.rm = T) +
+  geom_text(data=tredat,
+            aes(x=c(rep(NA,nclus),rep(25,nclus)),y=c(rep(NA,nclus),1:nclus),label=N,angle=90),
+            vjust=-0.5,na.rm = T) +
   theme(axis.title.x=element_blank(),axis.text.x=element_blank(),
         axis.ticks.x=element_blank(),axis.line=element_blank(),
         strip.background = element_blank(),
         strip.text.x = element_blank())
 
 #plot rotated tree
-png(file=paste0("output/03_figure_tree_",tx,".png"),width=6,height=6,units = "in", res=300)
+png(file=paste0("output/03_figure_tree_",tax,".png"),width=6,height=6,units = "in", res=300)
 print(treebarplot, vp=viewport(angle=-90, width = unit(.5, "npc"), height = unit(1, "npc")))
 dev.off()
-# ggsave(treebarplot, filename=paste0("output/03_figure_tree_",tx,".png"),width=6,height=6)
+# ggsave(treebarplot, filename=paste0("output/03_figure_tree_",tax,".png"),width=6,height=6)
 
 
 
@@ -131,82 +157,58 @@ dev.off()
 
 ## plot figure 4 -- taxonomic barplots by cluster and depth
 
-#make a smaller dataframe for ggplot
-head(x.meta)
-x.metasmall <- data.frame(x.meta$project, x.meta$station, x.meta$depth_type, x.meta$cellid, x.meta$cluster)
-colnames(x.metasmall) <- c('project','station','depth_type','cellid', 'cluster')
-rownames(x.metasmall) <- x.metasmall$cellid
-x.metasmall$cellid <- NULL
-head(x.metasmall)
-
-# pick the cumulative top 90% of ESVs
+# pick the cumulative top % of ESVs from each cluster
 x.pick = NULL
 for(i in 1:length(unique(x.meta$cluster))) {
-    x.here = x.taxa[x.meta$cluster==unique(x.meta$cluster)[i],]
+    x.here = x.prop[x.meta$cluster==unique(x.meta$cluster)[i],]
     x.here = x.here[,order(colSums(x.here),decreasing=TRUE)]
     
-    x.this = which( cumsum(colSums(x.here)/sum(x.here)) < 0.90)
+    x.this = which( cumsum(colSums(x.here)/sum(x.here)) < cutoff)
     x.pick = union(x.pick,names(x.this))
 }
 
-x.pick = x.pick[order(colSums(x.taxa[,x.pick]),decreasing=TRUE)]
-x.pick.taxa <- x.taxa[, x.pick]
-x.other <- x.taxa[, setdiff(colnames(x.taxa),x.pick)]
+x.pick = x.pick[order(colSums(x.prop[,x.pick]),decreasing=TRUE)]
+x.pick.prop <- x.prop[, x.pick]
+x.other.prop <- x.prop[, setdiff(colnames(x.prop),x.pick)]
 
-# do some renaming for plotting
-x.pick.names <- colnames(x.pick.taxa)
-class <-  taxa_split[match(x.pick.names,short_names),"Class"]
-order <- taxa_split[match(x.pick.names,short_names),"Order"]
-fam <- taxa_split[match(x.pick.names,short_names),"Family"]
-ge <- taxa_split[match(x.pick.names,short_names),"Genus"]
-sp <- taxa_split[match(x.pick.names,short_names),"Accession"]
-esv <- taxa_split[match(x.pick.names,short_names),"ESV"]
-pct <- boot[match(x.pick.names,short_names),"Genus"]
+# for sorting by taxonomy to make nice colors
+tmptax = taxa_split[match(x.pick, taxa_split$ESV),]
+rownames(tmptax) = x.pick
+tmptax$abund = colMeans(x.pick.prop)
+tmptax$esvrank = as.numeric(gsub("ESV_","",tmptax$ESV))
 
-allnames <- data.frame(class,order,fam,ge,sp,esv,pct)
-colnames(allnames) <- c('class','order','family','genus','accession','esv','pct')
-allnames$esvrank = order(as.numeric(do.call(rbind,strsplit(x=as.character(allnames$esv),split="_"))[,2]))
-allnames$abund = round(colMeans(x.taxa[,x.pick])*1000,1)
-names_short <- paste(allnames$class,allnames$family, allnames$genus, allnames$accession, allnames$esv, sep=' ')
-#new_name <- paste(allnames$family, allnames$ge, allnames$esv, "(",allnames$abund,")", sep=' ')
-new_name <- paste0(allnames$ge, " [", allnames$pct, "] ",allnames$esv, " (",allnames$abund,")")
-colnames(x.pick.taxa) <- t(new_name)
-x.pick.taxa$Other <- rowSums(x.other)
+tmptax = tmptax[
+  order(tmptax$Domain, tmptax$Kingdom, tmptax$Phylum, tmptax$Class, tmptax$Family, tmptax$Genus, tmptax$abund, tmptax$esvrank,
+  decreasing=c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE),method="radix")
+  ,]
 
-common_names = intersect(rownames(x.metasmall),rownames(x.pick.taxa))
-x.next.meta <- x.metasmall[common_names, ]
-x.next.taxa <- x.pick.taxa[common_names, ]
+othername = paste0("Other (", sprintf("%.1f",mean(rowSums(x.other.prop)*1000),1),")")
+tmptax[othername,] = c(rep("Other",times=ncol(taxa_split)), 0, 0)
 
-tmptax = data.frame(colnames(x.next.taxa),
-                c(as.character(allnames$fam),"Other"),
-                c(as.character(allnames$gen),"Other"),
-                c(as.numeric(as.character(allnames$esvrank)),99999),
-                colSums(x.next.taxa)
-)
+#names to plot with, including abundances
 
-colnames(tmptax) = c("short","fam","gen","esvrank","relabund")
-#tmptax = as.data.frame(tmptax,stringsAsFactors=F)
-tmptax = tmptax[order(tmptax$fam,tmptax$gen,as.numeric(tmptax$relabund),as.numeric(tmptax$esvrank),decreasing=c(FALSE,FALSE,TRUE,FALSE),method="radix"),]
-oth = which(rownames(tmptax)=="Other")
-tmpoth = tmptax[oth,]
-tmptax = tmptax[-oth,]
-tmptax = rbind(tmptax,"Other"=tmpoth)
+x.pick.prop[,othername] = rowSums(x.other.prop)
+x.pick.prop = x.pick.prop[,rownames(tmptax)]
 
-x.last.taxa = x.next.taxa[, rownames(tmptax)]
-x.next.meta$sample <- rownames(x.next.meta)
-x.last.meta = x.next.meta
+colnames(x.pick.prop) = paste0(
+  barplot_names[match(colnames(x.pick.prop),taxa_split$ESV)], " (", 
+  sprintf("%.1f",round(colMeans(x.pick.prop)*1000,1)), ")")
+
+colnames(x.pick.prop)[ncol(x.pick.prop)] = othername
+
+x.meta$sample = rownames(x.meta)
 
 # reshape data frame for ggplot
-df <- data.frame(x.last.taxa,x.last.meta[,c('depth_type','station','project','cluster')],check.names=FALSE) #taxa
+df <- data.frame(x.pick.prop,x.meta[,c('depth_type','station','project','cluster')],check.names=FALSE) #taxa
 
-df_long <- reshape2::melt(df, ix.vars=c('depth_type','station','project','cluster'), variable.names='taxa', na.rm=TRUE)
+df_long <- reshape2::melt(df, id.vars=c('depth_type','station','project','cluster'), variable.names='taxa', na.rm=TRUE)
 df_long$facet1 <- factor(df_long$depth_type, levels=c('bottom', 'midwater', 'surface'), labels=c("bottom","midwater","surface"), ordered=TRUE)
 df_long$facet2 <- factor(df_long$cluster, levels=clusnames)
 
 newdat <- df_long[!is.na(df_long$facet2), ]
 
 # construct barplot
-p <- ggplot(newdat, aes(fill = variable, y = value, x = facet1, label=variable)) +
+bplot <- ggplot(newdat, aes(fill = variable, y = value, x = facet1, label=variable)) +
   geom_bar(stat='identity', position=position_fill(reverse=T)) +
   ylab('Relative Abundance') + xlab('Depth Bin') +
   theme(axis.title.x = element_text(size=14), axis.title.y = element_text(size=14)) +
@@ -218,16 +220,16 @@ p <- ggplot(newdat, aes(fill = variable, y = value, x = facet1, label=variable))
         panel.grid.minor = element_blank(), axis.line = element_blank()) +
   theme(legend.text=element_text(size=8), legend.title=element_blank(), legend.position = 'none')
 
-# this colors the bars and legend by taxonomic level (e.g. 'gen', 'fam')
-pp = p + scale_fill_manual("legend",values = getcolors(tmptax,"gen"))
-pp
-ggsave(filename = paste0('output/03_figure_barplot_',tx,'.png'),device = png(),width = 12, height=4)
+# this colors the bars and legend by taxonomic level (e.g. 'Genus', 'Family')
+bplot = bplot + scale_fill_manual("legend",values = getcolors(tmptax,"Genus"))
+#bplot
+ggsave(plot = bplot, filename = paste0('output/03_figure_barplot_',tax,'.png'),device = png(),width = 12, height=4)
 
-ppl = pp + theme(legend.position="bottom") 
+ppl = bplot + theme(legend.position="bottom") 
 ppl_legend <- ggpubr::get_legend(ppl)
 ppleg = ggpubr::as_ggplot(ppl_legend)
 ppleg
-ggsave(filename = paste0('output/03_figure_barplot_leg_',tx,'.png'),device = png(),width = 12, height=4)
+ggsave(ppleg, filename = paste0('output/03_figure_barplot_',tax,'_leg.png'),device = png(),width = 18, height=8,dpi = 300)
 
 
 #### Generate Table 4
@@ -236,15 +238,9 @@ table4 = reshape2::dcast(table4,project + depth_type ~ cluster)
 table4 = table4[order(table4$depth_type, decreasing=T),]
 table4 = table4[order(table4$project),]
 colnames(table4)[1:2] = c("Project", "Depth Bin")
-write.table(table4,file=paste0("output/03_table_clusters_",tx,".tsv"),sep="\t",quote=F,row.names=F)
-
-if(tx=="Diatom") { d.meta = x.meta; d.top.names = x.pick.names; d.top.newnames = new_name }
-if(tx=="Picoeukaryote") { p.meta = x.meta; p.top.names = x.pick.names; p.top.newnames = new_name }
-
-
+write.table(table4,file=paste0("output/03_table_clusters_",tax,".tsv"),sep="\t",quote=F,row.names=F)
 
 #### box plots
-require(ggbeeswarm)
 
 metavar = c("depth_m","lat","lon","temp","salinity","DO",
             "FlECO-AFL(mg/m^3)","chl (ug/l)","phaeo (ug/l)","PO4(uM)","Sil(uM)",
@@ -270,7 +266,6 @@ znames = c("Latitude\n(°N)","Longitude\n(°E)","Temperature\n(°C)","Salinity\n
 #plot each metadata variable as a function of the clusters
 bptmp = list()
 for(i in 1:ncol(z.meta)) {
-  print(i)
   mvar = colnames(z.meta)[i]
   if(mvar=="cluster") next
   bptmp[[i]] = ggplot(data=z.meta, aes_string(x="cluster", y=mvar, na.rm=TRUE)) + 
@@ -287,17 +282,28 @@ for(i in 1:ncol(z.meta)) {
 
   }
 
-pdf(file=paste0("output/03_figure_cluster_boxplots_",tx,".pdf"),width=8,height=3)
+pdf(file=paste0("output/03_figure_cluster_boxplots_",tax,".pdf"),width=8,height=3)
 invisible(lapply(bptmp, print))
 dev.off()
 
 bpar = ggarrange(plots=bptmp,ncol=1)
-ggsave(plot=bpar, file=paste0("output/03_figure_cluster_boxplots_combined_",tx,".png"),
+ggsave(plot=bpar, file=paste0("output/03_figure_cluster_boxplots_combined_",tax,".png"),
        device=png(),width=6,height=30)
 
-} #end diatoms/picos
+
+### update saved files
+mat.list[[tax]][["meta"]] = x.meta
+mat.list[[tax]][["top.names"]] = rownames(tmptax)[1:(nrow(tmptax)-1)]
+mat.list[[tax]][["top.longnames"]] = colnames(x.pick.prop)
+
+
+
+graphics.off()
+
+} #end taxonomy loop
 
 
 #####
+
 
 source("bin/04_ts_plots.R")
